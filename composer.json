@@ -12,8 +12,11 @@
         "monolog/monolog": "1.11.*"
     },
     "require-dev": {
-        "phpunit/phpunit": "4.3.*"
     },
     "license": "MIT",
-    "minimum-stability": "dev"
+    "minimum-stability": "dev",
+    
+    "autoload": {
+        "psr-4": {"radbasa\\Chunks\\": "src/Chunks"}
+    }
 }
