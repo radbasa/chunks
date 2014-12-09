@@ -24,25 +24,31 @@ class Chunks
         return $this->optional;
     }
     
-    public function hasValidLength( $record )
+    public function getRecordCount()
     {
-        return strlen( $record ) % $this->length == 0 ? true : false;
+        return $this->record_count;
+    }
+    
+    public function hasValidLength( $record )
+    {   
+        $record_length = strlen( $record );
+        if ( !$this->single_with_optional_padding && $record_length % $this->length == 0 ||
+              $this->single_with_optional_padding && $record_length >= $this->length && $record_length <= $this->length + $this->optional )
+            return true;
+        else
+            throw new \UnexpectedValueException( 'Invalid Length' );
     }
     
     public function parse( $input )
     {
-        // test if optinoal padded
-        if ( !$this->hasValidLength( $input ) ) {
-            // throw Exception
-            return false;
-        }
-                
+        $this->hasValidLength( $input );
+
         $records = strlen( $input ) / $this->length;
         
-        if ( $this->single_with_optional_padding && $records != 1 ) {
-            // throw Exception
-            return false;
-        }
+        if ( $this->single_with_optional_padding )
+            $records = 1;
+        else
+            $records = strlen( $input ) / $this->length;
 
         $output_array = array();
 
@@ -50,11 +56,9 @@ class Chunks
             $this_array = array();
             
             foreach ( $this->format as $fieldformat ) {
-                if ( $this->single_with_optional_padding && array_key_exists( 'optionalpadding', $fieldformat ) ) {
-                    
-                } else {
+                if ( !( $this->single_with_optional_padding && array_key_exists( 'optionalpadding', $fieldformat ) ) ) {
                     $this_array += array( $fieldformat[ 'name' ] => substr( $input, 0, $fieldformat[ 'size' ] ) );
-                    $input = substr( $input, $fieldformat[ 'size' ] );
+                    $input = substr( $input, $fieldformat[ 'size' ] );                  
                 }
             }
             
@@ -71,8 +75,7 @@ class Chunks
         foreach ( $format as $index => $fieldformat ) {
             if ( array_key_exists( 'optionalpadding', $fieldformat ) && $fieldformat[ 'optionalpadding' ] == true ) {
                 if ( $index < $format_entries - 1 ) {
-                    // throw Exception
-                    return false;   
+                    throw new \InvalidArgumentException( 'Optionalpadding not in the last element' );
                 } else {
                     $this->optional = $fieldformat[ 'size' ];   
                     $this->single_with_optional_padding = true;

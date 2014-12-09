@@ -39,9 +39,10 @@ class ErrorHandlerTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals( 10, $this->chunks->getOptionalLength() );
     }
 
-/*
     public function testLengthSingleRecordWithOptionalPaddingWrongLocation()
     {
+        $this->setExpectedException( 'InvalidArgumentException', 'Optionalpadding not in the last element' );
+
         $format = array( 
                             array( 'name' => 'field1', 'size' => 4, 'callbacks' => array( ) ),
                             array( 'name' => 'field2', 'size' => 6, 'callbacks' => array( ) ),
@@ -50,23 +51,21 @@ class ErrorHandlerTest extends \PHPUnit_Framework_TestCase
                             array( 'name' => 'padding', 'size' => 10, 'callbacks' => array( ) )
                         );
         $this->chunks = new Chunks( $format );
-        $record = '3984194374AA238501DF          ';
-        
-        $this->assertEquals( 20, $this->chunks->getValidLength() );
-        $this->assertEquals( 10, $this->chunks->getOptionalLength() );
     }
-*/
        
     public function testLengthSingleRecord()
     {
         $record = '3984194374AA238501DF';
         $this->assertTrue( $this->chunks->hasValidLength( $record ) );
+
+        // Check for proper lengths
+        $this->setExpectedException( 'UnexpectedValueException', 'Invalid Length' );
         
         $record = '3984194374AA238501';
-        $this->assertFalse( $this->chunks->hasValidLength( $record ) );
-    
+        $this->chunks->hasValidLength( $record );
+        
         $record = '3984194374AA238501DFdfe';
-        $this->assertFalse( $this->chunks->hasValidLength( $record ) );
+        $this->chunks->hasValidLength( $record );
     }
     
     public function testLengthMultipleRecord()
@@ -85,7 +84,7 @@ class ErrorHandlerTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals( '238501DF', $parsed[ 0 ][ 'field4' ] );         
     }
     
-/*
+
     public function testParseSingleRecordWithOptionalPadding()
     {
         $format = array( 
@@ -99,14 +98,19 @@ class ErrorHandlerTest extends \PHPUnit_Framework_TestCase
         $record = '3984194374AA238501DF          ';
         
         $parsed = $this->chunks->parse( $record );
-        print_r( $parsed );
         
         $this->assertEquals( '3984', $parsed[ 0 ][ 'field1' ] );
         $this->assertEquals( '194374', $parsed[ 0 ][ 'field2' ] );
         $this->assertEquals( 'AA', $parsed[ 0 ][ 'field3' ] );
-        $this->assertEquals( '238501DF', $parsed[ 0 ][ 'field4' ] );         
+        $this->assertEquals( '238501DF', $parsed[ 0 ][ 'field4' ] );    
+        
+        // Length exception
+        $this->setExpectedException( 'UnexpectedValueException', 'Invalid Length' );
+        
+        $record = '3984194374AA238501DF           ';     // too much padding
+        $this->chunks->parse( $record );
     }
-*/
+
     
     public function testParseMultipleRecords()
     {
