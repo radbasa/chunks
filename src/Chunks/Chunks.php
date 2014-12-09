@@ -32,11 +32,20 @@ class Chunks
     public function hasValidLength( $record )
     {   
         $record_length = strlen( $record );
+        $padded_length = $this->length + $this->optional;
+        
         if ( !$this->single_with_optional_padding && $record_length % $this->length == 0 ||
-              $this->single_with_optional_padding && $record_length >= $this->length && $record_length <= $this->length + $this->optional )
+              $this->single_with_optional_padding && $record_length >= $this->length && $record_length <= $padded_length ) {
             return true;
-        else
-            throw new \UnexpectedValueException( 'Invalid Length' );
+        }
+        else {
+            $message = 'Expected ' . $this->length . ' with optional ' . $this->optional . '. Received ' . $record_length . '.';
+            
+            if ( $this->single_with_optional_padding && $record_length > $padded_length )
+                $message .= ' You might be trying to parse multiple records with a single record format.';
+            
+            throw new \UnexpectedValueException( 'Invalid Length. ' . $message );
+        }
     }
     
     public function parse( $input )
