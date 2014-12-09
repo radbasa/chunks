@@ -24,11 +24,6 @@ class Chunks
         return $this->optional;
     }
     
-    public function getRecordCount()
-    {
-        return $this->record_count;
-    }
-    
     public function hasValidLength( $record )
     {   
         $record_length = strlen( $record );
@@ -46,6 +41,8 @@ class Chunks
             
             throw new \UnexpectedValueException( 'Invalid Length. ' . $message );
         }
+        
+        return;
     }
     
     public function parse( $input )
@@ -66,8 +63,10 @@ class Chunks
             
             foreach ( $this->format as $fieldformat ) {
                 if ( !( $this->single_with_optional_padding && array_key_exists( 'optionalpadding', $fieldformat ) ) ) {
-                    $this_array += array( $fieldformat[ 'name' ] => substr( $input, 0, $fieldformat[ 'size' ] ) );
-                    $input = substr( $input, $fieldformat[ 'size' ] );                  
+                    $this_value = substr( $input, 0, $fieldformat[ 'size' ] );
+                    // perform callback functions here
+                    $this_array += array( $fieldformat[ 'name' ] => $this_value );
+                    $input = substr( $input, $fieldformat[ 'size' ] );          
                 }
             }
             
@@ -75,6 +74,29 @@ class Chunks
         }
         
         return $output_array;
+    }
+    
+    public function assemble( $input )
+    {
+        $this->checkKeys( $input );
+        
+        $output = '';
+        foreach ( $input as $entry ) {
+            foreach( $this->format as $format_item ) {
+                if ( array_key_exists( $format_item[ 'name' ], $entry ) ) {
+                    $append_this = $entry[ $format_item[ 'name' ] ];
+                    // perform callback functions here
+                    if ( $format_item[ 'size' ] == strlen( $append_this ) )
+                        $output .= $append_this;
+                    else
+                        throw new \InvalidArgumentException( 'Wrong field length' );
+                } else {
+                    throw new \UnexpectedValueException( 'Invalid key' );
+                }
+            }
+        }
+        
+        return $output;
     }
     
     private function setLengths( $format )
@@ -95,5 +117,28 @@ class Chunks
         }
         
         $this->length = $length;
+    }
+    
+    private function checkKeys( $input )
+    {
+        if ( !is_array( $input ) )
+            throw new \InvalidArgumentException( 'Must be an array' );
+            
+        $input_keys = array();
+        foreach ( $input as $entry ) {
+            foreach ( $entry as $key => $value ) {
+                if ( !in_array( $key, $input_keys ) )
+                    array_push( $input_keys, $key );
+            }
+        }
+                       
+        $format_keys = array();
+        foreach( $this->format as $entry )
+            array_push( $format_keys, $entry[ 'name' ] );
+        
+        if ( $input_keys != $format_keys )
+            throw new \UnexpectedValueException( 'Invalid keys' );
+        
+        return;
     }
 }

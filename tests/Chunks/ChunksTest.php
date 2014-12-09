@@ -160,7 +160,80 @@ class ErrorHandlerTest extends \PHPUnit_Framework_TestCase
         $parsed = $this->chunks->parse( $records );
     }
     
-    // CREATE records
+    // ASSEMBLE records
+    
+    public function testAssembleNotArrayInput()
+    {
+        $this->setExpectedException( 'InvalidArgumentException', 'Must be an array' );
+        
+        $input = 'gaerohargaherasdfiurehg';
+        
+        $this->chunks->assemble( $input );
+    }
+    
+    public function testAssemble()
+    {
+        $input = array(
+                    array( 'field1' => 3984,
+                            'field2' => '194374',
+                            'field3' => 'AA',
+                            'field4' => '238501DF' ),
+                    array( 'field1' => 2845,
+                            'field2' => '7FD409',
+                            'field3' => 'GH',
+                            'field4' => '56649234' ),
+                    array( 'field1' => 4562,
+                            'field2' => '349872',
+                            'field3' => 'QQ',
+                            'field4' => '4FGE6456' )
+        );
+        
+        $this->assertEquals( '3984194374AA238501DF28457FD409GH566492344562349872QQ4FGE6456', $this->chunks->assemble( $input ) );
+    }
+
+    public function testAssembleMissingKeys()
+    {
+        $input = array(
+                    array( 'field1' => 3984,
+                            'field2' => '194374',
+                            'field3' => 'AA',
+                            'field4' => '238501DF' ),
+                    array( 'field1' => 2845,
+                            'field2' => '7FD409',
+                            'field4' => '56649234' ),
+                    array( 'field1' => 4562,
+                            'field2' => '349872',
+                            'field3' => 'QQ',
+                            'field4' => '4FGE6456' )
+        );
+        
+        $this->setExpectedException( 'UnexpectedValueException', 'Invalid key' );
+        
+        $this->chunks->assemble( $input );
+    }
+
+    public function testAssembleExtraKeys()
+    {
+        $input = array(
+                    array( 'field1' => 3984,
+                            'field2' => '194374',
+                            'field3' => 'AA',
+                            'field4' => '238501DF' ),
+                    array( 'field1' => 2845,
+                            'field2' => '7FD409',
+                            'field3' => 'GH',
+                            'field4' => '56649234',
+                            'field5' => 'asgwe' ),
+                    array( 'field1' => 4562,
+                            'field2' => '349872',
+                            'field3' => 'QQ',
+                            'field4' => '4FGE6456' )
+        );
+        
+        $this->setExpectedException( 'UnexpectedValueException', 'Invalid keys' );
+        
+        $this->chunks->assemble( $input );
+    }
     
     public function testSingleCallbackFunction()
     {
